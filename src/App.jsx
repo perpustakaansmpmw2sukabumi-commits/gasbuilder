@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 // --- KONFIGURASI API GEMINI (Otomatis dari environment) ---
-const apiKey = ""; 
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 const SYSTEM_FEATURES_LIST = [
   { id: 'pwa', label: 'Progressive Web App (PWA)' },
