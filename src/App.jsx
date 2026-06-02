@@ -164,33 +164,6 @@ export default function App() {
     }
   };
 
-  const callGeminiJSON = async (prompt, jsonSchema, systemInstruction = null) => {
-    // Pengecekan API Key
-    if (!apiKey) {
-      alert("Error: API Key Gemini belum terpasang atau belum terbaca dari Environment Variables.");
-      return null;
-    }
-
-    try {
-      const payload = {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json", responseSchema: jsonSchema }
-      };
-      
-      // INJEKSI KEPRIBADIAN / EXPERTISE LEVEL (Sangat Penting!)
-      if (systemInstruction) {
-        payload.systemInstruction = { parts: [{ text: systemInstruction }] };
-      }
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      return textResponse ? JSON.parse(textResponse) : null;
-    } catch (error) { return null; }
-  };
-
   // --- LOGIKA UTAMA APLIKASI ---
 
   const handleGenerateDesc = async () => {
