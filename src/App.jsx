@@ -8,8 +8,9 @@ import {
   Undo2, Redo2, Check, Zap, Cpu
 } from 'lucide-react';
 
-// --- KONFIGURASI API GEMINI (Otomatis dari environment) ---
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+// --- KONFIGURASI API GEMINI ---
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ""; 
+
 const SYSTEM_FEATURES_LIST = [
   { id: 'pwa', label: 'Progressive Web App (PWA)' },
   { id: 'darkmode', label: 'Dark Mode Toggle' },
@@ -107,16 +108,69 @@ export default function App() {
   // --- ENGINE API GEMINI DENGAN TINGKAT KECERDASAN TERTINGGI ---
   const callGeminiText = async (prompt) => {
     try {
+      if (!apiKey) return "Error: API Key kosong. Pastikan Environment Variable VITE_GEMINI_API_KEY sudah diset di Vercel.";
+      
       const payload = { contents: [{ parts: [{ text: prompt }] }] };
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+      // PERBAIKAN: Menggunakan model gemini-2.5-flash yang stabil
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
       const data = await response.json();
+      
+      if(data.error) {
+         console.error("Gemini API Error:", data.error);
+         return `Error dari API Gemini: ${data.error.message}`;
+      }
+      
       return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    } catch (error) { return "Terjadi kesalahan koneksi AI."; }
+    } catch (error) { 
+      console.error("Fetch Catch Error:", error);
+      return "Terjadi kesalahan koneksi jaringan saat memanggil AI."; 
+    }
   };
 
   const callGeminiJSON = async (prompt, jsonSchema, systemInstruction = null) => {
+    try {
+       if (!apiKey) {
+          console.error("API Key Kosong!");
+          return null;
+       }
+
+      const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json", responseSchema: jsonSchema }
+      };
+      
+      if (systemInstruction) {
+        payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+      }
+
+      // PERBAIKAN: Menggunakan model gemini-2.5-flash yang stabil
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      
+      if(data.error) {
+         console.error("Gemini JSON API Error:", data.error);
+         return null;
+      }
+      
+      const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      return textResponse ? JSON.parse(textResponse) : null;
+    } catch (error) { 
+      console.error("Fetch Catch JSON Error:", error);
+      return null; 
+    }
+  };
+
+  const callGeminiJSON = async (prompt, jsonSchema, systemInstruction = null) => {
+    // Pengecekan API Key
+    if (!apiKey) {
+      alert("Error: API Key Gemini belum terpasang atau belum terbaca dari Environment Variables.");
+      return null;
+    }
+
     try {
       const payload = {
         contents: [{ parts: [{ text: prompt }] }],
